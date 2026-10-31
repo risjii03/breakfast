@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Завтрак в постель — меню</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;1,500&family=Nunito:wght@400;600&display=swap">
+<style>
+:root{--bg:#fdeff1;--card:#fff9f9;--ink:#4a1626;--muted:#8a5565;--accent:#b8324f;--line:#f1c9d1;--sel:#ffe1e7;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#2a0f19;--card:#3a1824;--ink:#fbe6ea;--muted:#d9a5b2;--accent:#ff8fa6;--line:#5c2a3a;--sel:#5a2336}}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Nunito,system-ui,sans-serif;line-height:1.5}
+main{max-width:560px;margin:0 auto;padding:36px 20px 56px}
+[hidden]{display:none!important}
+h1{font-family:Fraunces,Georgia,serif;font-style:italic;font-weight:500;font-size:2.6rem;line-height:1.1;margin:0 0 10px;text-align:center}
+.sub{text-align:center;color:var(--muted);margin:0 0 32px}
+h2{font-family:Fraunces,Georgia,serif;font-weight:500;font-size:1.35rem;margin:28px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.dish{display:flex;gap:14px;align-items:flex-start;width:100%;text-align:left;background:var(--card);color:inherit;border:1.5px solid var(--line);border-radius:14px;padding:14px 16px;margin:0 0 10px;font:inherit;cursor:pointer}
+.dish:focus-visible,.btn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.dish[aria-pressed="true"]{background:var(--sel);border-color:var(--accent)}
+.emoji{font-size:1.9rem;line-height:1}
+.txt{flex:1}
+.name{font-weight:600;font-size:1.05rem}
+.desc{color:var(--muted);font-size:.92rem}
+.price{white-space:nowrap;color:var(--accent);font-weight:600}
+.dish[aria-pressed="true"] .price::after{content:" ✓"}
+.btn{display:block;width:100%;margin-top:14px;padding:16px;border:0;border-radius:14px;background:var(--accent);color:#fff;font:600 1.1rem Nunito,sans-serif;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--accent);border:1.5px solid var(--accent)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px dashed var(--line)}
+.total{display:flex;justify-content:space-between;font-family:Fraunces,Georgia,serif;font-size:1.4rem;margin:16px 0 4px}
+.pay{display:block}
+.note{text-align:center;color:var(--muted);font-size:.9rem;margin-top:24px}
+.done{text-align:center;padding:24px 8px}
+.done h2{border:0;font-style:italic;font-size:1.9rem}
+</style>
+</head>
+<body>
+<main>
+<section id="menu">
+<h1>Завтрак в постель</h1>
+<p class="sub">Особое меню для самой любимой гостьи. Выбирай, что хочешь, шеф исполнит всё.</p>
+<div id="list"></div>
+<button class="btn" id="order" disabled>Выбери что-нибудь</button>
+<p class="note">Цены указаны в поцелуях. Один поцелуй можно заменить объятием, если шеф в хорошем настроении.</p>
+</section>
+
+<section id="checkout" hidden>
+<h1>Твой заказ</h1>
+<p class="sub">Всё ли верно? Теперь выбери, чем будешь платить.</p>
+<div id="rows"></div>
+<div class="total"><span>Итого</span><span id="sum"></span></div>
+<h2>Способ оплаты</h2>
+<div id="methods"></div>
+<button class="btn" id="pay" disabled>Выбери способ оплаты</button>
+<button class="btn ghost" id="back">Вернуться к меню</button>
+</section>
+
+<section id="done" class="done" hidden>
+<h2>Оплачено! ❤️</h2>
+<div id="receipt"></div>
+<p class="sub">Шеф уже бежит на кухню. Покажи этот экран, если захочешь добавки.</p>
+</section>
+</main>
+<script>
+var MENU=[
+{t:'Основное',i:[
+['🥐','Круассан с индейкой','Хрустящий, с нежной индейкой',2],
+['🍽️','Кукси','Фирменное блюдо от шефа',2],
+['🥗','Салат «Ля Киса»','Свежий и лёгкий, с любовью от шефа',2],
+['🍗','Курица с рисом','Сытно и по-домашнему',3],
+['🍅','Гречка с томатами','Тёплая, с сочными томатами',2]]},
+{t:'Сладкое',i:[
+['🌰','Фундучный десерт','Нежный, с хрустящим фундуком',3],
+['🍞','Тост с шоколадом','Тёплый, с расплавленным шоколадом',2],
+['🥛','Молочный ломтик','Нежный бисквит с молочной начинкой',1],
+['🍫','Буэно','Хрустящая вафля и крем',1],
+['🍫','Шоколад с кусочками хлопьев','Шоколад с хрустящими хлопьями',1],
+['🥜','Сникерс','Арахис, карамель, нуга',1]]},
+{t:'Чай',i:[
+['🌺','Каркаде','Кисленький, ярко-красный',1],
+['🫖','Чёрный','Классика',1],
+['🍃','Зелёный','Лёгкий и свежий',1],
+['🍓','Ягодный','Сладкий, с ароматом ягод',1]]},
+{t:'Кофе',i:[
+['☕','Капучино','С воздушной пенкой',1],
+['☕','Американо','Крепкий и бодрящий',1],
+['🥛','Латте','Нежный, с молоком',1],
+['🧊','Эспрессо тоник','Освежающий, со льдом',2]]},
+{t:'Напитки',i:[
+['🥤','Пепси','Холодная, с пузырьками',1],
+['🥤','Кола','Холодная, с пузырьками',1],
+['🥤','Фанта','Апельсиновая, холодная',1],
+['🥤','Спрайт','Лимон-лайм, холодный',1],
+['🍫','Горячий шоколад','Густой, с зефиром',2]]}
+];
+var PAYS=[
+['💋','Поцелуями',function(n){return n+' '+plural(n,'поцелуй','поцелуя','поцелуев');}],
+['🤗','Объятиями',function(n){var k=Math.ceil(n/2);return k+' '+plural(k,'объятие','объятия','объятий');}],
+['💆','Массажем спины',function(n){return (n*3)+' мин массажа';}],
+['🎁','Смешанно: половину поцелуями, половину объятиями',function(n){var a=Math.ceil(n/2),b=Math.floor(n/2);return a+' '+plural(a,'поцелуй','поцелуя','поцелуев')+' и '+b+' '+plural(b,'объятие','объятия','объятий');}]
+];
+function plural(n,a,b,c){var m=n%10,h=n%100;if(m==1&&h!=11)return a;if(m>=2&&m<=4&&(h<12||h>14))return b;return c;}
+function el(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!==undefined)e.textContent=txt;return e;}
+var picked=[],all=[];
+var list=document.getElementById('list'),orderBtn=document.getElementById('order');
+MENU.forEach(function(s){
+list.appendChild(el('h2','',s.t));
+s.i.forEach(function(d){
+var idx=all.length;all.push(d);
+var b=el('button','dish');b.setAttribute('aria-pressed','false');
+b.appendChild(el('span','emoji',d[0]));
+var t=el('span','txt');t.appendChild(el('span','name',d[1]));t.appendChild(document.createElement('br'));t.appendChild(el('span','desc',d[2]));
+b.appendChild(t);
+b.appendChild(el('span','price',d[3]+' '+plural(d[3],'поцелуй','поцелуя','поцелуев')));
+b.addEventListener('click',function(){
+var on=b.getAttribute('aria-pressed')!=='true';
+b.setAttribute('aria-pressed',on?'true':'false');
+if(on)picked.push(idx);else picked.splice(picked.indexOf(idx),1);
+refresh();});
+list.appendChild(b);});});
+function total(){return picked.reduce(function(s,i){return s+all[i][3];},0);}
+function refresh(){
+orderBtn.disabled=!picked.length;
+orderBtn.textContent=picked.length?'Сделать заказ ('+total()+' '+plural(total(),'поцелуй','поцелуя','поцелуев')+')':'Выбери что-нибудь';}
+function show(id){['menu','checkout','done'].forEach(function(x){document.getElementById(x).hidden=(x!==id);});window.scrollTo(0,0);}
+var method=-1,payBtn=document.getElementById('pay');
+orderBtn.addEventListener('click',function(){
+var rows=document.getElementById('rows');rows.textContent='';
+picked.forEach(function(i){var r=el('div','row');r.appendChild(el('span','',all[i][1]));r.appendChild(el('span','price',all[i][3]));rows.appendChild(r);});
+var n=total();
+document.getElementById('sum').textContent=n+' '+plural(n,'поцелуй','поцелуя','поцелуев');
+var box=document.getElementById('methods');box.textContent='';method=-1;
+payBtn.disabled=true;payBtn.textContent='Выбери способ оплаты';
+PAYS.forEach(function(p,k){
+var b=el('button','dish');b.setAttribute('aria-pressed','false');
+b.appendChild(el('span','emoji',p[0]));
+var t=el('span','txt');t.appendChild(el('span','name',p[1]));t.appendChild(document.createElement('br'));t.appendChild(el('span','desc','К оплате: '+p[2](n)));
+b.appendChild(t);
+b.addEventListener('click',function(){
+Array.prototype.forEach.call(box.children,function(c){c.setAttribute('aria-pressed','false');});
+b.setAttribute('aria-pressed','true');method=k;
+payBtn.disabled=false;payBtn.textContent='Оплатить';});
+box.appendChild(b);});
+show('checkout');});
+document.getElementById('back').addEventListener('click',function(){show('menu');});
+payBtn.addEventListener('click',function(){
+if(method<0)return;
+var n=total(),rc=document.getElementById('receipt');rc.textContent='';
+rc.appendChild(el('p','',picked.length+' '+plural(picked.length,'блюдо','блюда','блюд')+' на сумму '+n+' '+plural(n,'поцелуй','поцелуя','поцелуев')));
+rc.appendChild(el('p','name','Оплата: '+PAYS[method][1].split(':')[0].toLowerCase()+' — '+PAYS[method][2](n)));
+show('done');});
+</script>
+</body>
+</html>
