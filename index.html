@@ -35,6 +35,24 @@ h2{font-family:Fraunces,Georgia,serif;font-weight:500;font-size:1.35rem;margin:2
 .note{text-align:center;color:var(--muted);font-size:.9rem;margin-top:24px}
 .done{text-align:center;padding:24px 8px}
 .done h2{border:0;font-style:italic;font-size:1.9rem}
+.pumpkin{display:block;margin:0 auto 4px;background:none;border:0;font-size:4.5rem;line-height:1;cursor:pointer;animation:wob 2.4s ease-in-out infinite}
+.pumpkin:focus-visible{outline:3px solid var(--accent);outline-offset:4px;border-radius:50%}
+@keyframes wob{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(7deg)}}
+@media (prefers-reduced-motion:reduce){.pumpkin{animation:none}}
+.hint{text-align:center;color:var(--muted);font-size:.85rem;margin:0 0 20px}
+.modal{position:fixed;inset:0;background:rgba(20,5,10,.75);display:flex;align-items:center;justify-content:center;padding:20px;z-index:20}
+.modal-box{background:var(--card);color:var(--ink);border:2px solid var(--accent);border-radius:18px;padding:24px;max-width:420px;width:100%;text-align:center}
+.modal-box h3{font-family:Fraunces,Georgia,serif;font-style:italic;font-weight:500;font-size:1.6rem;margin:0 0 10px}
+.code{font-family:Fraunces,Georgia,serif;font-size:2.6rem;letter-spacing:.3em;color:var(--accent);margin:8px 0 0}
+.qbox{margin-top:36px;padding:20px;border:1.5px dashed var(--accent);border-radius:14px;text-align:center}
+.qbox h2{border:0;margin:0 0 4px}
+.qbox input{width:100%;padding:14px;font:600 1.4rem Nunito,sans-serif;text-align:center;letter-spacing:.3em;border:1.5px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink)}
+.qbox input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.err{color:var(--accent);min-height:1.5em;margin:10px 0 0;font-weight:600}
+.riddle{font-family:Fraunces,Georgia,serif;font-style:italic;font-size:1.4rem;text-align:center;margin:24px 0}
+.invite{margin-top:20px;padding:28px 20px;border:2px solid var(--accent);border-radius:18px;background:var(--card);text-align:center}
+.invite h1{font-size:2.2rem}
+.invite p{margin:12px 0}
 </style>
 </head>
 <body>
@@ -48,6 +66,8 @@ h2{font-family:Fraunces,Georgia,serif;font-weight:500;font-size:1.35rem;margin:2
 </section>
 
 <section id="checkout" hidden>
+<button class="pumpkin" id="pumpkin" aria-label="Открыть сообщение">🎃</button>
+<p class="hint">Нажми на тыкву</p>
 <h1>Твой заказ</h1>
 <p class="sub">Всё ли верно? Теперь выбери, чем будешь платить.</p>
 <div id="rows"></div>
@@ -61,9 +81,42 @@ h2{font-family:Fraunces,Georgia,serif;font-weight:500;font-size:1.35rem;margin:2
 <section id="done" class="done" hidden>
 <h2>Оплачено! ❤️</h2>
 <div id="receipt"></div>
-<p class="sub">Шеф уже бежит на кухню. Покажи этот экран, если захочешь добавки.</p>
+<p class="sub">Шеф уже бежит на кухню.</p>
+<div class="qbox">
+<p style="margin:0">Твой секретный код:</p>
+<div class="code">1209</div>
+<button class="btn" id="topump">Идти к тыкве 🎃</button>
+</div>
+</section>
+<section id="questscr" hidden>
+<h1>Жуткий квест</h1>
+<p class="sub" id="qsub"></p>
+<p class="riddle" id="riddle"></p>
+<input id="ans" type="text" autocomplete="off" aria-label="Ответ" style="width:100%;padding:14px;font:600 1.2rem Nunito,sans-serif;text-align:center;border:1.5px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink)">
+<button class="btn" id="check">Ответить</button>
+<p class="err" id="qerr" role="status" aria-live="polite"></p>
+<button class="btn" id="next" hidden>Дальше</button>
+</section>
+<section id="invite" hidden>
+<div class="invite">
+<div style="font-size:3rem">🕯️🎃🕯️</div>
+<h1>Приглашение</h1>
+<p>Киса, ты приглашена на домашний просмотр мультфильма «Коралина».</p>
+<p>Пока будем смотреть, будем вырезать тыкву.</p>
+<p class="name">Я тебя люблю очень сильно ❤️</p>
+</div>
 </section>
 </main>
+<div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="mt">
+<div class="modal-box">
+<h3 id="mt">Тыква заперта 🎃</h3>
+<p>Введи код из сообщения, чтобы начать жуткий квест.</p>
+<input id="code" type="text" inputmode="numeric" maxlength="4" autocomplete="off" aria-label="Код" placeholder="····" style="width:100%;padding:14px;font:600 1.4rem Nunito,sans-serif;text-align:center;letter-spacing:.3em;border:1.5px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink)">
+<p class="err" id="err" role="status" aria-live="polite"></p>
+<button class="btn" id="go">Начать квест</button>
+<button class="btn ghost" id="close">Закрыть</button>
+</div>
+</div>
 <script>
 var MENU=[
 {t:'Основное',i:[
@@ -125,7 +178,7 @@ function total(){return picked.reduce(function(s,i){return s+all[i][3];},0);}
 function refresh(){
 orderBtn.disabled=!picked.length;
 orderBtn.textContent=picked.length?'Сделать заказ ('+total()+' '+plural(total(),'поцелуй','поцелуя','поцелуев')+')':'Выбери что-нибудь';}
-function show(id){['menu','checkout','done'].forEach(function(x){document.getElementById(x).hidden=(x!==id);});window.scrollTo(0,0);}
+function show(id){['menu','checkout','done','questscr','invite'].forEach(function(x){document.getElementById(x).hidden=(x!==id);});window.scrollTo(0,0);}
 var method=-1,payBtn=document.getElementById('pay');
 orderBtn.addEventListener('click',function(){
 var rows=document.getElementById('rows');rows.textContent='';
@@ -152,6 +205,45 @@ var n=total(),rc=document.getElementById('receipt');rc.textContent='';
 rc.appendChild(el('p','',picked.length+' '+plural(picked.length,'блюдо','блюда','блюд')+' на сумму '+n+' '+plural(n,'поцелуй','поцелуя','поцелуев')));
 rc.appendChild(el('p','name','Оплата: '+PAYS[method][1].split(':')[0].toLowerCase()+' — '+PAYS[method][2](n)));
 show('done');});
+var modal=document.getElementById('modal');
+document.getElementById('pumpkin').addEventListener('click',function(){modal.hidden=false;document.getElementById('code').focus();});
+document.getElementById('close').addEventListener('click',function(){modal.hidden=true;});
+document.getElementById('topump').addEventListener('click',function(){show('checkout');});
+function tryCode(){
+var v=document.getElementById('code').value.trim(),e=document.getElementById('err');
+if(v==='1209'){e.textContent='';modal.hidden=true;qi=0;loadQ();show('questscr');}
+else{e.textContent='Дверь не поддаётся… Код неверный.';}}
+document.getElementById('go').addEventListener('click',tryCode);
+document.getElementById('code').addEventListener('keydown',function(ev){if(ev.key==='Enter')tryCode();});
+var QUEST=[
+{sub:'Свет гаснет… Дверь открылась. Назад дороги нет 👻',q:'Что становится больше, если из него забирать?',a:['яма','дыра'],ok:'Верно! Но это только начало…'},
+{sub:'Первая вкусняшка уже ждёт тебя 👁️',q:'Белый шарик с глазом, в который воткнули нож. Что это такое?',a:['глазик','глаз'],ok:'Верно! Это Глазик. Сейчас принесу 🔪'},
+{sub:'Вторая вкусняшка уже ждёт тебя 🧠',q:'Зелёный панкейк с зелёным мозгом, глазами и шприцом с кровью. Кто это?',a:['бака','бяка'],ok:'Верно! Это Бака. Сейчас принесу 🧟'}
+];
+var qi=0;
+function loadQ(){
+var d=QUEST[qi];
+document.getElementById('qsub').textContent=d.sub;
+document.getElementById('riddle').textContent=d.q;
+var a=document.getElementById('ans');a.value='';a.disabled=false;
+document.getElementById('qerr').textContent='';
+document.getElementById('check').hidden=false;
+document.getElementById('next').hidden=true;}
+function tryAns(){
+var d=QUEST[qi],a=document.getElementById('ans').value.trim().toLowerCase().replace(/ё/g,'е'),e=document.getElementById('qerr');
+if(d.a.indexOf(a)>=0){
+e.textContent=d.ok;
+document.getElementById('ans').disabled=true;
+document.getElementById('check').hidden=true;
+var nx=document.getElementById('next');
+nx.textContent=(qi===QUEST.length-1)?'Открыть приглашение 💌':'Дальше';
+nx.hidden=false;}
+else{e.textContent='Нет… Тени шепчут, что ты ошиблась. Попробуй ещё.';}}
+document.getElementById('check').addEventListener('click',tryAns);
+document.getElementById('ans').addEventListener('keydown',function(ev){if(ev.key==='Enter'&&!ev.target.disabled)tryAns();});
+document.getElementById('next').addEventListener('click',function(){
+qi++;
+if(qi>=QUEST.length){show('invite');}else{loadQ();window.scrollTo(0,0);}});
 </script>
 </body>
 </html>
